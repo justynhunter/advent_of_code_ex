@@ -9,22 +9,24 @@ defmodule AdventOfCode.Solution.Year2025.Day01 do
       "L" <> n -> -String.to_integer(n)
       "R" <> n -> String.to_integer(n)
     end)
-    |> Enum.reduce(%{position: 50, zero_visits: 0}, &rotate/2)
+    |> Stream.scan(%{position: 50}, &rotate/2)
+    |> Enum.to_list()
   end
 
-  defp rotate(rotation, %{position: position, zero_visits: zero_visits}) do
+  defp rotate(rotation, %{position: position}) do
     %{
       position: Integer.mod(position + rotation, 100),
-      zero_visits:
-        case Integer.mod(position + rotation, 100) do
-          0 -> zero_visits + 1
-          _ -> zero_visits
-        end
+      zero_visits: count_zero(position, rotation)
     }
   end
 
-  def part1(rotations), do: rotations.zero_visits
+  defp count_zero(position, rotation) when rotation > 0, do: zero_visits(rotation, 100 - position)
+  defp count_zero(position, rotation) when rotation < 0, do: zero_visits(abs(rotation), position)
 
-  def part2(_input) do
-  end
+  defp zero_visits(rotation, 0), do: div(rotation, 100)
+  defp zero_visits(rotation, d_zero) when rotation >= d_zero, do: 1 + div(rotation - d_zero, 100)
+  defp zero_visits(_, _), do: 0
+
+  def part1(rotations), do: Enum.count(rotations, &(&1.position == 0))
+  def part2(rotations), do: Enum.sum_by(rotations, & &1.zero_visits)
 end
