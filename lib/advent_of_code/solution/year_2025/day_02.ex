@@ -12,9 +12,7 @@ defmodule AdventOfCode.Solution.Year2025.Day02 do
     end)
   end
 
-  defp num_of_digits(num), do: num_of_digits(div(num, 10), 1)
-  defp num_of_digits(0, count), do: count
-  defp num_of_digits(num, count), do: num_of_digits(div(num, 10), count + 1)
+  defp num_of_digits(num), do: num |> Integer.digits() |> Enum.count()
 
   defp add_num_digits(num), do: %{number: num, digits: num_of_digits(num)}
 
@@ -27,7 +25,7 @@ defmodule AdventOfCode.Solution.Year2025.Day02 do
     div(num.number, factor) == Integer.mod(num.number, factor)
   end
 
-  defp process_range(range) do
+  defp process_part1(range) do
     range.from..range.to
     |> Enum.map(&add_num_digits/1)
     |> Enum.filter(&even_digits/1)
@@ -35,12 +33,58 @@ defmodule AdventOfCode.Solution.Year2025.Day02 do
     |> Enum.sum_by(& &1.number)
   end
 
+  defp factors_of(n) do
+    digits = num_of_digits(n)
+
+    %{
+      number: n,
+      factors: Enum.filter(1..digits, &(rem(digits, &1) == 0)) |> Enum.filter(&(digits / &1 >= 2))
+    }
+  end
+
+  defp not_uniq(nums) do
+    nums |> Enum.uniq() |> length() <= 1
+  end
+
+  defp mark_repeats(n) do
+    %{
+      number: n.number,
+      factors: n.factors,
+      repeated:
+        Enum.map(n.factors, fn factor ->
+          n.number
+          |> Integer.digits()
+          |> Enum.chunk_every(factor)
+          |> Enum.map(&Integer.undigits/1)
+          |> (fn x ->
+                if not_uniq(x) do
+                  n.number
+                else
+                  0
+                end
+              end).()
+        end)
+        |> Enum.uniq()
+        |> Enum.sum()
+    }
+  end
+
+  defp process_part2(range) do
+    range.from..range.to
+    |> Enum.map(&factors_of/1)
+    |> Enum.map(&mark_repeats/1)
+    |> Enum.sum_by(& &1.repeated)
+  end
+
   def part1(ranges) do
     ranges
-    |> Enum.map(&process_range/1)
+    |> Enum.map(&process_part1/1)
     |> Enum.sum()
   end
 
-  def part2(_input) do
+  def part2(ranges) do
+    ranges
+    |> Enum.map(&process_part2/1)
+    |> Enum.sum()
   end
 end
